@@ -1,0 +1,40 @@
+#!/bin/bash
+# Double-click to run the Early Signal demo on macOS.
+cd "$(dirname "$0")" || exit 1
+echo "== Early Signal demo =="
+
+PY=""
+for c in python3.13 python3.12 python3.11 python3.10 python3; do
+  if command -v "$c" >/dev/null 2>&1; then PY="$c"; break; fi
+done
+if [ -z "$PY" ]; then echo "Python 3.10+ not found. Install it from python.org and re-run."; read -r; exit 1; fi
+echo "Using $($PY --version)"
+
+if [ ! -d .venv ]; then
+  echo "Creating virtual environment..."
+  "$PY" -m venv .venv || { echo "venv failed"; read -r; exit 1; }
+fi
+source .venv/bin/activate
+if [ ! -f .venv/.deps_ok ]; then
+  echo "Installing Python packages (first run only, a few minutes)..."
+  pip install --upgrade pip -q && pip install -r requirements.txt -q && touch .venv/.deps_ok || { echo "pip install failed"; read -r; exit 1; }
+fi
+
+# Use the shipped models if they load with this machine's library versions, otherwise retrain.
+if ! python -c "import sys; sys.path.insert(0,'src'); from ews.inference import Scorer; Scorer()" >/dev/null 2>&1; then
+  echo "Training models on this machine (~8 min)..."
+  python scripts/train.py || { echo "training failed"; read -r; exit 1; }
+fi
+
+if [ ! -d frontend/dist ]; then
+  if command -v npm >/dev/null 2>&1; then
+    echo "Building the frontend (first run only)..."
+    (cd frontend && npm install --no-audit --no-fund && npm run build) || { echo "frontend build failed"; read -r; exit 1; }
+  else
+    echo "Node.js/npm not found - install from nodejs.org for the UI. API will still run on :8000/docs"
+  fi
+fi
+
+(sleep 4; open "http://localhost:8000") &
+echo "Serving on http://localhost:8000  (close this window or press Ctrl+C to stop)"
+python -m uvicorn api.main:app --port 8000
