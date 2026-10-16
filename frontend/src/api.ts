@@ -101,3 +101,26 @@ export const FIELD_LABELS: Record<string, string> = {
   num_bills_paid_late_last_4w: "Bills paid late (4w)", financial_stress_queries: "Stress queries",
   emi_bounced_flag: "EMI bounced (0/1)", missed_emi_count_rolling: "Missed EMIs (rolling)",
 };
+
+// ---------------------------------------------------------------- live pipeline
+export interface StageSummary { id: string; title: string; ms: number; status: string }
+export interface LiveRecord {
+  customer_id: string; week_idx: number; week: string; risk: number; tier: Tier; p_lgb: number; p_gru: number;
+  rules_fired: number; action: string; actual_label: number | null; total_ms: number; stages: StageSummary[];
+  reasons: string[]; case_id: string | null;
+}
+export interface Step { id: string; title: string; what: string; status: string; ms: number; data: any }
+export interface Trace extends Scored { steps: Step[]; total_ms: number; action: string }
+export interface Case {
+  id: string; customer_id: string; week_idx: number; week: string; risk: number; tier: Tier; action: string;
+  status: "pending" | "approved" | "rejected"; reasons: string[]; created: string; updated: string;
+  message: Narrative | null; note?: string;
+}
+export interface AuditEntry { ts: string; type: string; [k: string]: any }
+
+export const live = {
+  trace: (customer_id: string, week_idx?: number) => req<Trace>("/api/trace", { customer_id, week_idx }),
+  queue: () => req<{ items: Case[]; pending: number }>("/api/queue"),
+  decide: (id: string, decision: "approve" | "reject", note = "") => req<Case>(`/api/queue/${id}`, { decision, note }),
+  audit: (limit = 40) => req<{ entries: AuditEntry[]; total: number }>(`/api/audit?limit=${limit}`),
+};

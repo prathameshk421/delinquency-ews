@@ -7,3 +7,4 @@ venv/
 frontend/node_modules/
 frontend/dist/
 .ipynb_checkpoints/
+logs/

@@ -26,13 +26,15 @@ if ! python -c "import sys; sys.path.insert(0,'src'); from ews.inference import 
   python scripts/train.py || { echo "training failed"; read -r; exit 1; }
 fi
 
-if [ ! -d frontend/dist ]; then
-  if command -v npm >/dev/null 2>&1; then
-    echo "Building the frontend (first run only)..."
-    (cd frontend && npm install --no-audit --no-fund && npm run build) || { echo "frontend build failed"; read -r; exit 1; }
-  else
-    echo "Node.js/npm not found - install from nodejs.org for the UI. API will still run on :8000/docs"
+if command -v npm >/dev/null 2>&1; then
+  if [ ! -d frontend/node_modules ]; then
+    echo "Installing frontend packages (first run only)..."
+    (cd frontend && npm install --no-audit --no-fund) || { echo "npm install failed"; read -r; exit 1; }
   fi
+  echo "Building the frontend..."
+  (cd frontend && npm run build >/dev/null) || { echo "frontend build failed"; read -r; exit 1; }
+elif [ ! -d frontend/dist ]; then
+  echo "Node.js/npm not found - install from nodejs.org for the UI. API will still run on :8000/docs"
 fi
 
 (sleep 4; open "http://localhost:8000") &

@@ -13,6 +13,18 @@ weekly panel ─┬─> LightGBM (current standing + EMI phase + causal trends) 
                                                                                 (out-of-fold)                                + Groq narrative
 ```
 
+## Live pipeline (the landing page)
+
+Open the app and press **Start live stream**. Real weekly records from the 2,000 held-out customers are replayed and
+scored one by one by the same `Scorer.score()` the API uses. Each record leaves a **trail** of 11 timed stages with the
+real values each one produced:
+
+`ingest → feature engineering → early-warning rules → LightGBM (+TreeSHAP) → sequence window → attention-GRU →
+meta-learner (shown as the actual arithmetic) → calibration → risk tier → explanation → routing`
+
+High and Medium cases enter an **approval queue**; approving one writes the outreach note (Groq LLM, or a template
+without a key). Every scored record and every human decision is appended to `logs/audit_log.jsonl`.
+
 ## Results (2,000 held-out customers, 24,000 customer-weeks)
 
 | Model | AUC-ROC | AUC-PR | Brier ↓ | ECE ↓ |
@@ -69,6 +81,7 @@ cp .env.example .env        # optional: add GROQ_API_KEY for LLM narratives
 
 python scripts/train.py     # ~8 min on a laptop CPU; --fast for a 1-min smoke run
 ./run.sh                    # builds the UI once, then serves UI + API at http://localhost:8000
+# macOS: or just double-click start-demo.command (sets up everything, then opens the browser)
 ```
 
 Frontend dev mode (hot reload): run `uvicorn api.main:app --port 8000` in one terminal and `cd frontend && npm run dev` in another, then open http://localhost:5173.
@@ -93,8 +106,8 @@ src/ews/
   inference.py   Scorer used by the API (what-if supported)
   llm.py         Groq narrative with template fallback
 scripts/train.py full training + evaluation + figures
-api/main.py      FastAPI: /api/metrics, /portfolio, /customers/{id}, /score, /narrative
-frontend/        React + Vite UI (Overview, Portfolio, Customer analysis, Pipeline)
+api/main.py      FastAPI: /api/stream (SSE live pipeline), /trace, /queue, /audit, /metrics, /portfolio, /customers/{id}, /score, /narrative
+frontend/        React + Vite UI (Live pipeline, Model report, Portfolio, Customer analysis, Pipeline & ablations)
 ```
 
 ## Data
