@@ -20,10 +20,15 @@ if [ ! -f .venv/.deps_ok ]; then
   pip install --upgrade pip -q && pip install -r requirements.txt -q && touch .venv/.deps_ok || { echo "pip install failed"; read -r; exit 1; }
 fi
 
+# Serving scores one record at a time: single-threaded avoids the macOS OpenMP clash
+# between LightGBM and PyTorch.
+export OMP_NUM_THREADS=1 KMP_DUPLICATE_LIB_OK=TRUE
+
 # Use the shipped models if they load with this machine's library versions, otherwise retrain.
+echo "Checking the trained models load..."
 if ! python -c "import sys; sys.path.insert(0,'src'); from ews.inference import Scorer; Scorer()" >/dev/null 2>&1; then
   echo "Training models on this machine (~8 min)..."
-  python scripts/train.py || { echo "training failed"; read -r; exit 1; }
+  OMP_NUM_THREADS= python scripts/train.py || { echo "training failed"; read -r; exit 1; }
 fi
 
 if command -v npm >/dev/null 2>&1; then

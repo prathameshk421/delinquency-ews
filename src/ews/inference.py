@@ -1,6 +1,14 @@
 """Serving-time scorer: one customer-week in, calibrated risk + explanation out."""
 import json
+import os
 import time
+
+# LightGBM and PyTorch each ship an OpenMP runtime; on macOS running both in one process can
+# deadlock. Scoring one record at a time needs no parallelism, so pin both to one thread.
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
+
+import torch  # noqa: E402  (import torch before lightgbm)
 
 import joblib
 import lightgbm as lgb
@@ -53,6 +61,7 @@ TIMELINE_FIELDS = [
 
 class Scorer:
     def __init__(self):
+        torch.set_num_threads(1)
         b = joblib.load(C.ARTIFACT_DIR / "bundle.joblib")
         self.b = b
         self.booster = lgb.Booster(model_file=str(C.ARTIFACT_DIR / "lgb_model.txt"))
@@ -153,8 +162,8 @@ class Scorer:
 
         # 4. LightGBM + TreeSHAP -----------------------------------------
         X = row[b["tab_cols"]]
-        p_lgb = float(self.booster.predict(X)[0])
-        contrib = self.booster.predict(X, pred_contrib=True)[0]
+        p_lgb = float(self.booster.predict(X, num_threads=1)[0])
+        contrib = self.booster.predict(X, pred_contrib=True, num_threads=1)[0]
         raw_row = cur.to_dict()
         raw_row.update({c: row[c].iloc[0] for c in b["tab_cols"] if c not in raw_row})
         lgb_f, bias = explain.lgb_factors(contrib, b["tab_cols"], raw_row)

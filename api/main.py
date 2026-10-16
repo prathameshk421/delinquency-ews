@@ -4,6 +4,7 @@
 """
 import asyncio
 import json
+import os
 import sys
 import threading
 import time
@@ -17,6 +18,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+
+os.environ.setdefault("OMP_NUM_THREADS", "1")  # avoid LightGBM/PyTorch OpenMP deadlock on macOS
+os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
