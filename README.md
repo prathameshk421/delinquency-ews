@@ -13,6 +13,38 @@ weekly panel ─┬─> LightGBM (current standing + EMI phase + causal trends) 
                                                                                 (out-of-fold)                                + Groq narrative
 ```
 
+## Screenshots
+
+**Live pipeline.** Held-out test records are scored one by one. The page shows the tier mix, the latency and the time spent in each of the 11 stages.
+
+![Live pipeline](docs/screenshots/live.png)
+
+**Approval queue and audit log.** A person approves each High or Medium case. Approval makes the Groq LLM write the outreach note.
+
+![Approval queue](docs/screenshots/approval-queue.png)
+
+**Portfolio.** All 2,000 test customers for one week, ranked by calibrated risk.
+
+![Portfolio](docs/screenshots/portfolio.png)
+
+**Customer analysis.** The risk for each week, the fusion of the two models and the rules that fired.
+
+![Customer](docs/screenshots/customer.png)
+
+**Analyst note and what-if.** The LLM explains the score. You can edit a week's values and score it again.
+
+![Analyst note](docs/screenshots/customer-explain.png)
+
+**Model report and pipeline.**
+
+![Model report](docs/screenshots/model-report.png)
+
+![Pipeline](docs/screenshots/pipeline.png)
+
+**Dark mode.**
+
+![Dark mode](docs/screenshots/live-dark.png)
+
 ## Live pipeline (the landing page)
 
 Open the app and press **Start live stream**. Real weekly records from the 2,000 held-out customers are replayed and
