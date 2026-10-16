@@ -23,9 +23,9 @@ weekly panel ─┬─> LightGBM (current standing + EMI phase + causal trends) 
 
 ![Approval queue](docs/screenshots/approval-queue.png)
 
-**Portfolio.** All 2,000 test customers for one week, ranked by calibrated risk.
+**Watchlist.** All 2,000 test customers for one week, ranked by calibrated risk.
 
-![Portfolio](docs/screenshots/portfolio.png)
+![Watchlist](docs/screenshots/watchlist.png)
 
 **Customer analysis.** The risk for each week, the fusion of the two models and the rules that fired.
 
@@ -139,7 +139,7 @@ src/ews/
   llm.py         Groq narrative with template fallback
 scripts/train.py full training + evaluation + figures
 api/main.py      FastAPI: /api/stream (SSE live pipeline), /trace, /queue, /audit, /metrics, /portfolio, /customers/{id}, /score, /narrative
-frontend/        React + Vite UI (Live pipeline, Model report, Portfolio, Customer analysis, Pipeline & ablations)
+frontend/        React + Vite UI (Live pipeline, Model report, Watchlist, Customer analysis, Pipeline & ablations)
 ```
 
 ## Data

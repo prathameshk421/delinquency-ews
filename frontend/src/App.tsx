@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { NavLink, Route, Routes } from "react-router-dom";
+import { Navigate, NavLink, Route, Routes } from "react-router-dom";
 import { api, Health } from "./api";
 import { Logo } from "./components/ui";
 import Overview from "./pages/Overview";
-import Portfolio from "./pages/Portfolio";
+import Watchlist from "./pages/Watchlist";
 import Customer from "./pages/Customer";
 import Pipeline from "./pages/Pipeline";
 import Live from "./pages/Live";
@@ -40,7 +40,7 @@ export default function App() {
         <div className="brand"><Logo /><span className="brand-name">Early Signal</span></div>
         <nav className="nav">
           <NavLink to="/" end className="nav-item">Live</NavLink>
-          <NavLink to="/portfolio" className="nav-item">Portfolio</NavLink>
+          <NavLink to="/watchlist" className="nav-item">Watchlist</NavLink>
           <NavLink to="/customer" className="nav-item">Customers</NavLink>
           <NavLink to="/report" className="nav-item">Model report</NavLink>
           <NavLink to="/pipeline" className="nav-item">Pipeline</NavLink>
@@ -56,7 +56,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Live />} />
           <Route path="/report" element={<Overview />} />
-          <Route path="/portfolio" element={<Portfolio />} />
+          <Route path="/watchlist" element={<Watchlist />} />
+          <Route path="/portfolio" element={<Navigate to="/watchlist" replace />} />
           <Route path="/customer" element={<Customer />} />
           <Route path="/customer/:id" element={<Customer />} />
           <Route path="/pipeline" element={<Pipeline />} />

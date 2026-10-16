@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api, Portfolio as P, pct } from "../api";
 import { Loading, RiskBar, Stat, TierPill } from "../components/ui";
 
-export default function Portfolio() {
+export default function Watchlist() {
   const nav = useNavigate();
   const [data, setData] = useState<P | null>(null);
   const [week, setWeek] = useState<number | undefined>();
@@ -25,7 +25,7 @@ export default function Portfolio() {
     <div className="page">
       <div className="page-head">
         <div>
-          <h1>Portfolio</h1>
+          <h1>Watchlist</h1>
           <p className="lede">Held-out customers for week {data.week_idx + 1}, ranked by calibrated risk. Click a row to see why.</p>
         </div>
         <input className="input" style={{ maxWidth: 240 }} placeholder="Search customer ID" value={q} onChange={(e) => setQ(e.target.value)} />
