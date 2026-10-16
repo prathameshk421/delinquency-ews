@@ -63,7 +63,7 @@ without a key). Every scored record and every human decision is appended to `log
 |---|---|---|---|---|
 | LightGBM (raw features) | 0.940 | 0.781 | 0.0585 | 0.0054 |
 | Attention-GRU (causal) | 0.936 | 0.762 | 0.0630 | 0.0101 |
-| Fixed 0.6 / 0.4 average (original design) | 0.940 | 0.779 | 0.0593 | 0.0125 |
+| Fixed 0.6 / 0.4 average (baseline) | 0.940 | 0.779 | 0.0593 | 0.0125 |
 | **Final: history-aware stack + Platt** | **0.941** | **0.781** | **0.0585** | **0.0039** |
 
 - **Recall 89.5%, precision 72.2%** at the cost-optimal action threshold (0.167).
@@ -72,17 +72,16 @@ without a key). Every scored record and every human decision is appended to `log
 
 Plots are in `reports/figures/`. Every number is in `reports/metrics.json`.
 
-## What changed from the original prototype (HoH)
+## Design choices
 
-| Original | Now | Why |
-|---|---|---|
-| No training code, only pickled models | `scripts/train.py` reproduces everything | Results must be reproducible |
-| GRU fed a 12-week window for every row | Causal windows: the row for week *t* sees only weeks ≤ *t* | Otherwise the model reads future weeks |
-| Fixed `0.6·lgb + 0.4·gru`, calibrator bypassed at inference | Logistic meta-learner on **out-of-fold** log-odds, with an early-history interaction; calibrator actually applied | Learned, leak-free fusion |
-| Thresholds 0.50 / 0.75 picked by hand | Medium = C_FP/(C_FP+C_FN) with FN costing 5× FP; High = precision ≥ 80% on the calibration split | Thresholds tied to a stated cost |
-| GRU "SHAP" was a raw gradient | Integrated Gradients + attention per week; TreeSHAP for LightGBM; both merged in final log-odds space | Explanations that add up |
-| Rule pre-filter assumed safe | Audited: it **drops 164 of 4,356 real defaulters (3.8%)** to save 27% of scoring | Measured trade-off; a LightGBM-screen cascade is offered instead (28% fewer GRU calls, 39 dropped, still scored) |
-| Kafka, Cassandra, Postgres, Redis, voice agent | Removed | Out of scope for the ML evaluation |
+| Choice | Why |
+|---|---|
+| `scripts/train.py` trains and evaluates everything from the raw CSV | Every result can be reproduced |
+| Causal windows: the row for week *t* sees only weeks ≤ *t* | The model must never read future weeks |
+| Logistic meta-learner on **out-of-fold** log-odds, with an early-history interaction, then calibration | Learned, leak-free fusion. It beats a fixed `0.6·lgb + 0.4·gru` baseline on calibration |
+| Medium = C_FP/(C_FP+C_FN) with a missed default costing 5× a false alarm; High = precision ≥ 80% on the calibration split | Thresholds come from a stated cost, not from hand-picked cut-offs |
+| Integrated Gradients + attention per week for the GRU, TreeSHAP for LightGBM, merged in final log-odds space | Explanations that add up to the score |
+| The rule pre-filter is audited, not trusted: it **drops 164 of 4,356 real defaulters (3.8%)** to save 27% of scoring | A LightGBM-screen cascade is used instead: 28% fewer GRU calls, 39 screened out, and they still get a score |
 
 ### Findings worth presenting
 
@@ -99,7 +98,7 @@ Plots are in `reports/figures/`. Every number is in `reports/metrics.json`.
 | Attention-GRU without EMI phase | 0.933 | 0.754 |
 | Attention-GRU, 4-week window | 0.935 | 0.762 |
 | Attention-GRU, 8-week window | 0.936 | 0.761 |
-| Attention-GRU, original 8 velocity features | 0.927 | 0.727 |
+| Attention-GRU, 8 velocity features only | 0.927 | 0.727 |
 
 ## Run it
 

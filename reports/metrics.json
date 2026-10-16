@@ -43,7 +43,7 @@
       "recall": 0.8939393939393939,
       "f1": 0.7740011926058438
     },
-    "Fixed 0.6/0.4 average (original)": {
+    "Fixed 0.6/0.4 average (baseline)": {
       "auc_roc": 0.9396534017167659,
       "auc_pr": 0.7787472996784055,
       "brier": 0.059309177519201596,
@@ -332,7 +332,7 @@
     },
     {
       "model": "Attention-GRU",
-      "detail": "original 8 velocity features, 12-week window",
+      "detail": "8 velocity features only, 12-week window",
       "params": 24002,
       "auc_roc": 0.9270315039755397,
       "auc_pr": 0.7271425503695491

@@ -30,7 +30,7 @@ export default function Pipeline() {
       <div className="page-head">
         <div>
           <h1>Pipeline</h1>
-          <p className="lede">How the model works, the experiments behind each choice, and what changed from the original prototype.</p>
+          <p className="lede">How the model works, the experiments behind each choice, and how we tested them.</p>
         </div>
       </div>
 
@@ -75,7 +75,7 @@ export default function Pipeline() {
       <Section title="Rule pre-filter vs model cascade" sub="Does gating customers before the ensemble cost us real defaulters?">
         <div className="grid g2">
           <div className="card">
-            <h3>Rule-based gate (original design)</h3>
+            <h3>Rule-based gate</h3>
             <div className="grid g2" style={{ gap: 10 }}>
               <div><div className="stat-label">Scoring saved</div><div className="stat-value">{pf.compute_saved_pct.toFixed(1)}%</div></div>
               <div><div className="stat-label">Defaulters silently dropped</div><div className="stat-value down">{pf.defaulters_dropped}</div><div className="stat-sub">{(100 - pf.defaulters_kept_pct).toFixed(2)}% of all defaulters</div></div>

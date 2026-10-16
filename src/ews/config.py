@@ -23,7 +23,7 @@ STATIC_NUM_COLS = [
     "emi_amount_inr",
 ]
 
-# The 8 engineered velocity / EMI-event features used by the original GRU.
+# The 8 engineered velocity / EMI-event features (the small-input GRU ablation).
 VELOCITY_8 = [
     "balance_velocity",
     "salary_delay_delta",

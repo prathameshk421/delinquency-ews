@@ -169,12 +169,12 @@ def main():
 
     # ---------------------------------------------------- headline results
     yt = y[te]
-    naive = 0.6 * pl_te + 0.4 * pg_te  # the original repo's fixed-weight heuristic
+    naive = 0.6 * pl_te + 0.4 * pg_te  # fixed-weight baseline
     results = {
         "LightGBM (raw features)": None,
         "LightGBM (+ trend features)": metrics.summary(yt, pl_te, thr_action),
         "Attention-GRU (causal)": metrics.summary(yt, pg_te, thr_action),
-        "Fixed 0.6/0.4 average (original)": metrics.summary(yt, naive, thr_action),
+        "Fixed 0.6/0.4 average (baseline)": metrics.summary(yt, naive, thr_action),
         "Stacked, plain meta-learner": metrics.summary(yt, s_te_plain, thr_action),
         "Stacked, history-aware (uncalibrated)": metrics.summary(yt, s_te, thr_action),
         "Stacked + isotonic": metrics.summary(yt, iso_only.predict(s_te), thr_action),
@@ -277,7 +277,7 @@ def main():
         sc8 = features.SeqScaler(C.VELOCITY_8).fit(df[is_["train"]])
         X8, M8, _, _ = features.build_windows(df, sc8, C.SEQ_LEN)
         m8 = fit_seq(split["train"], X=X8, M=M8, tag=" (velocity-8)")
-        eval_seq(m8, X8, M8, "Attention-GRU", "original 8 velocity features, 12-week window")
+        eval_seq(m8, X8, M8, "Attention-GRU", "8 velocity features only, 12-week window")
         del X8, M8
         ablations.append({"model": "LightGBM", "detail": "trend features, no EMI phase", "params": None,
                           "auc_roc": float(roc_auc_score(yt, p_lgb_ns)), "auc_pr": float(average_precision_score(yt, p_lgb_ns))})

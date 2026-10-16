@@ -155,8 +155,8 @@ class Scorer:
                           "op": op, "threshold": thr, "fired": bool(fired)})
         fired_names = [r["rule"] for r in rules if r["fired"]]
         step("prefilter", "Early-warning rules",
-             f"{len(prefilter.RULES)} RBI-style early-warning rules are checked. In the original design customers with no "
-             "rule fired were skipped; here every customer is still scored and the gate is only reported.",
+             f"{len(prefilter.RULES)} RBI-style early-warning rules are checked. A hard gate would skip customers with no "
+             "rule fired; here every customer is still scored and the gate is only reported.",
              {"rules": rules, "fired": len(fired_names), "gate": "route" if fired_names else "would skip"},
              status="flag" if fired_names else "ok")
 

@@ -50,7 +50,7 @@ export default function Overview() {
       </div>
 
       <div className="grid g4">
-        <Stat label="AUC-ROC" value={f3(fin.auc_roc)} sub={<>original deck reported 0.871</>} />
+        <Stat label="AUC-ROC" value={f3(fin.auc_roc)} sub={<>final stacked + calibrated model</>} />
         <Stat label="AUC-PR" value={f3(fin.auc_pr)} sub={<>base rate {pct(m.data.positive_rate)}</>} />
         <Stat label={`Recall @ ${fin.threshold.toFixed(2)}`} value={pct(fin.recall)} sub={<>precision {pct(fin.precision)}</>} />
         <Stat label="Median lead time" value={`${m.lead_time.median_weeks} wks`} sub={<>before first bounced / missed EMI</>} />
