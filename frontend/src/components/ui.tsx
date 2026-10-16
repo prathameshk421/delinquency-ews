@@ -4,8 +4,8 @@ import { Tier, tierColor, Factor } from "../api";
 export function Logo({ size = 28 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden>
-      <rect width="32" height="32" rx="9" fill="var(--accent)" />
-      <path d="M6 18h5l3-8 4 13 3-7h5" stroke="#fff" strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <rect width="32" height="32" rx="10" fill="var(--ink)" />
+      <path d="M7 18h4.5l2.5-7 4 12 2.5-5H25" stroke="var(--accent)" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -86,6 +86,6 @@ export function Loading({ label = "Loading" }: { label?: string }) {
 }
 
 export const chartTooltip = {
-  contentStyle: { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 12.5 },
+  contentStyle: { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, fontSize: 12.5, boxShadow: "var(--shadow-lg)" },
   labelStyle: { color: "var(--text-2)" },
 };

@@ -24,16 +24,18 @@ export default function Portfolio() {
   return (
     <div className="page">
       <div className="page-head">
-        <div className="eyebrow">Held-out portfolio · week {data.week_idx + 1}</div>
-        <h1>Weekly watch-list</h1>
-        <p className="lede">Every held-out customer scored for the selected week, ranked by calibrated risk. Click a row to see why.</p>
+        <div>
+          <h1>Portfolio</h1>
+          <p className="lede">Held-out customers for week {data.week_idx + 1}, ranked by calibrated risk. Click a row to see why.</p>
+        </div>
+        <input className="input" style={{ maxWidth: 240 }} placeholder="Search customer ID" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
 
       <div className="grid g4">
         <Stat label="Customers scored" value={data.total.toLocaleString()} />
-        <Stat label="High risk" value={<span style={{ color: "var(--high)" }}>{data.counts.High}</span>} sub="escalate to relationship manager" />
-        <Stat label="Medium risk" value={<span style={{ color: "var(--med)" }}>{data.counts.Medium}</span>} sub="digital nudge / check-in" />
-        <Stat label="Low risk" value={<span style={{ color: "var(--low)" }}>{data.counts.Low}</span>} sub="monitor" />
+        <Stat label="High risk" value={<span style={{ color: "var(--high)" }}>{data.counts.High.toLocaleString()}</span>} sub="escalate to relationship manager" />
+        <Stat label="Medium risk" value={<span style={{ color: "var(--med)" }}>{data.counts.Medium.toLocaleString()}</span>} sub="digital nudge / check-in" />
+        <Stat label="Low risk" value={<span style={{ color: "var(--low)" }}>{data.counts.Low.toLocaleString()}</span>} sub="monitor" />
       </div>
 
       <div className="toolbar section" style={{ marginTop: 28, marginBottom: 14 }}>
@@ -47,10 +49,9 @@ export default function Portfolio() {
             <button key={t} className={tier === t ? "on" : ""} onClick={() => setTier(t)}>{t || "All"}</button>
           ))}
         </div>
-        <input className="input" style={{ maxWidth: 220 }} placeholder="Search customer ID" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
 
-      <div className="card table-wrap" style={{ padding: 6 }}>
+      <div className="card table-wrap">
         <table className="table">
           <thead>
             <tr><th>Customer</th><th>Segment</th><th>Product</th><th>Risk</th><th className="num">Score</th><th className="num">Δ vs last wk</th><th className="num">LGB / GRU</th><th>Tier</th><th>Actual</th></tr>

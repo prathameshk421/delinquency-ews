@@ -28,9 +28,10 @@ export default function Pipeline() {
   return (
     <div className="page">
       <div className="page-head">
-        <div className="eyebrow">How it works</div>
-        <h1>Pipeline, ablations and what we changed</h1>
-        <p className="lede">The original prototype fused a LightGBM and a GRU with fixed weights. Here is what the redesigned pipeline does differently, and the experiments behind each choice.</p>
+        <div>
+          <h1>Pipeline</h1>
+          <p className="lede">How the model works, the experiments behind each choice, and what changed from the original prototype.</p>
+        </div>
       </div>
 
       <div className="flow">
@@ -54,7 +55,7 @@ export default function Pipeline() {
 
       {m.ablations.length > 0 && (
         <Section title="Ablations" sub="Every variant trained on the same customers and scored on the same held-out test set.">
-          <div className="card table-wrap" style={{ padding: 6 }}>
+          <div className="card table-wrap">
             <table className="table">
               <thead><tr><th>Model</th><th>Configuration</th><th className="num">Params</th><th className="num">AUC-ROC</th><th className="num">AUC-PR</th></tr></thead>
               <tbody>
@@ -94,7 +95,7 @@ export default function Pipeline() {
           <b>Takeaway.</b> A hard rule gate trades real defaulters for a small compute saving. The GRU has only {m.model_sizes.gru_params.toLocaleString()} parameters,
           so the rules are more useful as human-readable early-warning flags than as a gate.
         </div>
-        <div className="card table-wrap" style={{ marginTop: 14, padding: 6 }}>
+        <div className="card table-wrap" style={{ marginTop: 14 }}>
           <table className="table">
             <thead><tr><th>Rule</th><th className="num">Fires on</th><th className="num">Default rate when fired</th></tr></thead>
             <tbody>

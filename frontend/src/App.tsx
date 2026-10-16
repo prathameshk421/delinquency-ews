@@ -8,8 +8,13 @@ import Customer from "./pages/Customer";
 import Pipeline from "./pages/Pipeline";
 import Live from "./pages/Live";
 
-const Icon = ({ d }: { d: string }) => (
-  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d={d} /></svg>
+const THEMES = ["auto", "light", "dark"] as const;
+const ThemeIcon = ({ t }: { t: string }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    {t === "dark" ? <path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z" />
+      : t === "light" ? <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>
+      : <><circle cx="12" cy="12" r="9" /><path d="M12 3v18" /><path d="M12 3a9 9 0 010 18z" fill="currentColor" /></>}
+  </svg>
 );
 
 export default function App() {
@@ -25,32 +30,28 @@ export default function App() {
     try { localStorage.setItem("theme", theme); } catch { /* ignore */ }
   }, [theme]);
 
+  const ok = !!health?.models_trained;
+  const statusText = !health ? "API offline" : !ok ? "Models not trained" : health.llm.configured ? "Models · LLM ready" : "Models ready";
+  const next = THEMES[(THEMES.indexOf(theme as (typeof THEMES)[number]) + 1) % THEMES.length];
+
   return (
     <div className="shell">
-      <aside className="sidebar">
+      <header className="topbar">
         <div className="brand"><Logo /><span className="brand-name">Early Signal</span></div>
-        <NavLink to="/" end className="nav-item"><Icon d="M3 12h4l3-8 4 16 3-8h4" />Live pipeline</NavLink>
-        <NavLink to="/report" className="nav-item"><Icon d="M4 20V10M10 20V4M16 20v-7M22 20H2" />Model report</NavLink>
-        <NavLink to="/portfolio" className="nav-item"><Icon d="M4 6h16M4 12h16M4 18h10" />Portfolio</NavLink>
-        <NavLink to="/customer" className="nav-item"><Icon d="M12 12a4 4 0 100-8 4 4 0 000 8zM4 21a8 8 0 0116 0" />Customer analysis</NavLink>
-        <NavLink to="/pipeline" className="nav-item"><Icon d="M4 7h6v4H4zM14 13h6v4h-6zM10 9h2a2 2 0 012 2v4" />Pipeline & ablations</NavLink>
-        <div className="sidebar-foot">
-          <div>
-            <span className="status-dot" style={{ background: health?.models_trained ? "var(--low)" : "var(--high)" }} />
-            {health ? (health.models_trained ? "Models loaded" : "Models not trained") : "API offline"}
-          </div>
-          <div>
-            <span className="status-dot" style={{ background: health?.llm.configured ? "var(--low)" : "var(--text-3)" }} />
-            {health?.llm.configured ? `LLM · ${health.llm.model}` : "LLM key not set (template mode)"}
-          </div>
-          <div className="seg" style={{ marginTop: 6 }}>
-            {["auto", "light", "dark"].map((t) => (
-              <button key={t} className={theme === t ? "on" : ""} onClick={() => setTheme(t)}>{t}</button>
-            ))}
-          </div>
-          <div>Group TY_11-22 · PICT</div>
+        <nav className="nav">
+          <NavLink to="/" end className="nav-item">Live</NavLink>
+          <NavLink to="/portfolio" className="nav-item">Portfolio</NavLink>
+          <NavLink to="/customer" className="nav-item">Customers</NavLink>
+          <NavLink to="/report" className="nav-item">Model report</NavLink>
+          <NavLink to="/pipeline" className="nav-item">Pipeline</NavLink>
+        </nav>
+        <div className="topbar-right">
+          <span className="status" title={health?.llm.configured ? `LLM: ${health.llm.model}` : "No LLM key: template mode"}>
+            <span className="status-dot" style={{ background: ok ? "var(--low)" : "var(--high)" }} />{statusText}
+          </span>
+          <button className="icon-btn" title={`Theme: ${theme} (click for ${next})`} onClick={() => setTheme(next)}><ThemeIcon t={theme} /></button>
         </div>
-      </aside>
+      </header>
       <main className="main">
         <Routes>
           <Route path="/" element={<Live />} />

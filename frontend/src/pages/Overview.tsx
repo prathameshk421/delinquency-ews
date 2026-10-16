@@ -40,13 +40,13 @@ export default function Overview() {
   return (
     <div className="page">
       <div className="page-head">
-        <div className="eyebrow">Loan delinquency early warning · model report</div>
-        <h1>Who is likely to miss an EMI in the next 2–4 weeks?</h1>
-        <p className="lede">
-          LightGBM scores each customer's current financial standing, a causal attention-GRU reads their weekly behaviour
-          up to that week, and a history-aware meta-learner fuses both into one calibrated probability. All numbers below are on{" "}
-          {m.data.split.test.toLocaleString()} customers the models never saw during training.
-        </p>
+        <div>
+          <h1>Model report</h1>
+          <p className="lede">
+            Who will miss an EMI in the next 2–4 weeks? All numbers are on {m.data.split.test.toLocaleString()} customers
+            the models never saw in training.
+          </p>
+        </div>
       </div>
 
       <div className="grid g4">
@@ -57,7 +57,7 @@ export default function Overview() {
       </div>
 
       <Section title="Model comparison" sub={`Calibration chosen by grouped-CV Brier: ${m.calibration.chosen}. Action threshold = C_FP / (C_FP + C_FN) = ${fin.threshold.toFixed(3)}.`}>
-        <div className="card table-wrap" style={{ padding: 6 }}>
+        <div className="card table-wrap">
           <table className="table">
             <thead>
               <tr><th>Model</th><th className="num">AUC-ROC</th><th className="num">AUC-PR</th><th className="num">Brier ↓</th><th className="num">ECE ↓</th><th className="num">Precision</th><th className="num">Recall</th><th className="num">F1</th></tr>
@@ -101,7 +101,7 @@ export default function Overview() {
         </div>
 
         <div className="card">
-          <h3>Reliability — does 0.3 really mean 30%?</h3>
+          <h3>Reliability: does 0.3 really mean 30%?</h3>
           <ResponsiveContainer width="100%" height={260}>
             <LineChart data={relData} margin={{ top: 4, right: 12, bottom: 22, left: -8 }}>
               <CartesianGrid stroke="var(--grid)" vertical={false} />
@@ -118,7 +118,7 @@ export default function Overview() {
         </div>
 
         <div className="card">
-          <h3>AUC by weeks of history — why the meta-learner is history-aware</h3>
+          <h3>AUC by weeks of history</h3>
           <ResponsiveContainer width="100%" height={240}>
             <LineChart data={m.by_week} margin={{ top: 4, right: 12, bottom: 22, left: -8 }}>
               <CartesianGrid stroke="var(--grid)" vertical={false} />
@@ -137,14 +137,14 @@ export default function Overview() {
         </div>
 
         <div className="card">
-          <h3>Lead time over the reactive (bounced / missed EMI) baseline</h3>
+          <h3>Lead time over the reactive baseline</h3>
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={lead} margin={{ top: 4, right: 12, bottom: 22, left: -8 }}>
               <CartesianGrid stroke="var(--grid)" vertical={false} />
               <XAxis dataKey="weeks" stroke="var(--border-strong)" label={{ value: "Weeks earlier than reactive flag", position: "insideBottom", offset: -10, fill: "var(--text-3)", fontSize: 12 }} />
               <YAxis stroke="var(--border-strong)" />
               <Tooltip {...chartTooltip} />
-              <Bar dataKey="n" name="Customers" fill="var(--accent)" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="n" name="Customers" fill="var(--accent)" fillOpacity={0.85} radius={[8, 8, 8, 8]} maxBarSize={34} />
             </BarChart>
           </ResponsiveContainer>
           <p className="small muted" style={{ margin: "6px 0 0" }}>
@@ -159,7 +159,7 @@ export default function Overview() {
           {(["High", "Medium", "Low"] as const).map((t) => (
             <div className="card" key={t}>
               <span className={`pill ${t}`}>{t}</span>
-              <div className="stat-value" style={{ marginTop: 10 }}>{m.tiers[t].default_rate_pct.toFixed(1)}%</div>
+              <div className="stat-value" style={{ marginTop: 14 }}>{m.tiers[t].default_rate_pct.toFixed(1)}%</div>
               <div className="stat-sub">actual default rate · {m.tiers[t].share_pct.toFixed(1)}% of customer-weeks</div>
             </div>
           ))}

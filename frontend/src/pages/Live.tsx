@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Area, AreaChart, Cell, Pie, PieChart, ReferenceLine, ResponsiveContainer, YAxis } from "recharts";
 import { AuditEntry, Case, LiveRecord, RULE_LABELS, Step, Trace, live, pct, tierColor } from "../api";
 import { Loading, TierPill, fmtNum } from "../components/ui";
 
@@ -90,47 +91,96 @@ export default function Live() {
   const pick = (r: LiveRecord) => { setFollow(false); setSelected(r); loadTrace(r); };
   const avg = (k: string) => (stats.n ? (stats.stageMs[k] ?? 0) / stats.n : 0);
 
+  const tiers = (["High", "Medium", "Low"] as const).map((t) => ({ t, n: stats[t] }));
+  const spark = [...feed].reverse().slice(-40).map((r, i) => ({ i, ms: r.total_ms }));
+  const avgMs = stats.n ? stats.ms / stats.n : 0;
+  const flagged = stats.High + stats.Medium;
+
   return (
     <div className="page wide">
       <div className="page-head">
-        <div className="eyebrow">Live pipeline · real model, real records</div>
-        <h1>Watch each customer's week go through the model</h1>
-        <p className="lede">
-          Every row below is a real weekly record from one of 2,000 customers the model never saw in training. Each record is
-          scored live by the same code the API uses. Click any record to see its full trail: every stage, the numbers it
-          produced, and how long it took.
-        </p>
-      </div>
-
-      <div className="card explainer">
-        <div><b>The problem.</b> Banks usually notice trouble only after an EMI bounces. We predict, every week, which customers will bounce an EMI <i>2–4 weeks from now</i>, so the bank can help before it happens.</div>
-        <div><b>The data.</b> 10,000 customers × 12 weeks of banking behaviour: salary timing, balances, card use, bills, UPI payments to lending apps, EMI history.</div>
-        <div><b>The model.</b> LightGBM reads the current snapshot, a GRU reads the week-by-week story, a meta-learner fuses them, and calibration turns the result into an honest probability with reasons.</div>
-      </div>
-
-      <div className="toolbar" style={{ margin: "22px 0 16px" }}>
-        {running
-          ? <button className="btn" onClick={stop}><span className="live-dot" /> Pause</button>
-          : <button className="btn primary" onClick={start}>{stats.n ? "Resume stream" : "Start live stream"}</button>}
-        <div className="seg">
-          {(Object.keys(SPEEDS) as (keyof typeof SPEEDS)[]).map((s) => (
-            <button key={s} className={speed === s ? "on" : ""} onClick={() => setSpeed(s)}>{s}</button>
-          ))}
+        <div>
+          <h1>Live pipeline</h1>
+          <p className="lede">Real weekly records from 2,000 held-out customers, scored one by one by the production model. Click a record to see every stage.</p>
         </div>
-        <span className="small muted">Now replaying <b style={{ color: "var(--text)" }}>week {week + 1}</b> of 12</span>
-        <label className="small muted" style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          <input type="checkbox" checked={follow} onChange={(e) => setFollow(e.target.checked)} /> follow newest record
-        </label>
-        {err && <span className="small err">{err}</span>}
+        <div className="toolbar">
+          <div className="seg">
+            {(Object.keys(SPEEDS) as (keyof typeof SPEEDS)[]).map((s) => (
+              <button key={s} className={speed === s ? "on" : ""} onClick={() => setSpeed(s)}>{s}</button>
+            ))}
+          </div>
+          {running
+            ? <button className="btn" onClick={stop}><span className="live-dot" /> Pause</button>
+            : <button className="btn primary" onClick={start}>{stats.n ? "Resume stream" : "Start live stream"}</button>}
+        </div>
       </div>
+      {err && <p className="small err" style={{ margin: "-10px 0 16px" }}>{err}</p>}
 
-      <div className="grid g6">
-        <Mini label="Records scored" value={stats.n.toLocaleString()} />
-        <Mini label="Avg latency" value={stats.n ? `${(stats.ms / stats.n).toFixed(0)} ms` : "—"} />
-        <Mini label="High" value={stats.High} color="var(--high)" />
-        <Mini label="Medium" value={stats.Medium} color="var(--med)" />
-        <Mini label="Low" value={stats.Low} color="var(--low)" />
-        <Mini label="High that really defaulted" value={stats.High ? pct(stats.correctHigh / stats.High, 0) : "—"} />
+      <div className="overview">
+        <div className="card">
+          <div className="card-head"><h3>Risk tiers</h3><span className="small muted">this session</span></div>
+          <div className="donut-wrap">
+            <div className="donut">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={stats.n ? tiers : [{ t: "none", n: 1 }]} dataKey="n" innerRadius={58} outerRadius={82} paddingAngle={stats.n ? 3 : 0}
+                    cornerRadius={6} stroke="none" startAngle={90} endAngle={-270} isAnimationActive={false}>
+                    {(stats.n ? tiers : [{ t: "none" }]).map((x) => (
+                      <Cell key={x.t} fill={x.t === "none" ? "var(--surface-2)" : tierColor(x.t as "High")} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="donut-center"><div><b>{stats.n.toLocaleString()}</b><span>records</span></div></div>
+            </div>
+            <div className="legend">
+              {tiers.map(({ t, n }) => (
+                <div className="legend-row" key={t}>
+                  <i style={{ background: tierColor(t) }} />
+                  <span>{t} <span className="muted">({stats.n ? pct(n / stats.n, 0) : "0%"})</span></span>
+                  <b>{n.toLocaleString()}</b>
+                </div>
+              ))}
+              <div className="small muted">{stats.skip} records fired no early-warning rule.</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="stat-label">Average latency per record</div>
+          <div className="stat-value">{stats.n ? `${avgMs.toFixed(0)} ms` : "0 ms"}</div>
+          <div className="trend">all 11 stages, end to end</div>
+          <div className="spark">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={spark} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
+                <defs>
+                  <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--accent)" stopOpacity={0.25} />
+                    <stop offset="100%" stopColor="var(--accent)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <YAxis hide domain={["dataMin - 5", "dataMax + 5"]} />
+                {stats.n > 0 && <ReferenceLine y={avgMs} stroke="var(--text-3)" strokeDasharray="3 4" />}
+                <Area dataKey="ms" type="linear" stroke="var(--accent)" strokeWidth={1.6} fill="url(#sparkFill)" isAnimationActive={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="stat-label">High tier that really defaulted</div>
+          <div className="stat-value">{stats.High ? pct(stats.correctHigh / stats.High, 0) : "0%"}</div>
+          <div className="trend"><b>{flagged.toLocaleString()}</b> cases sent for review</div>
+          <div style={{ marginTop: 22 }}>
+            <div style={{ display: "flex", justifyContent: "space-between" }} className="small">
+              <span className="muted">Replay progress</span><span>Week {week + 1} of 12</span>
+            </div>
+            <div className="progress"><span style={{ width: `${((week + (running || stats.n ? 1 : 0)) / 12) * 100}%` }} /></div>
+            <label className="check" style={{ marginTop: 16 }}>
+              <input type="checkbox" checked={follow} onChange={(e) => setFollow(e.target.checked)} /> Follow the newest record
+            </label>
+          </div>
+        </div>
       </div>
 
       <div className="card stagebar" style={{ marginTop: 16 }}>
@@ -138,7 +188,7 @@ export default function Live() {
           <div key={s.id} className="stage" style={{ animationDelay: `${i * 45}ms` }} data-pulse={pulse % 2}>
             <div className="stage-dot" />
             <div className="stage-name">{s.short}</div>
-            <div className="stage-ms mono">{stats.n ? `${avg(s.id).toFixed(1)} ms` : "—"}</div>
+            <div className="stage-ms mono">{stats.n ? `${avg(s.id).toFixed(1)} ms` : "·"}</div>
           </div>
         ))}
       </div>
@@ -164,7 +214,7 @@ export default function Live() {
         <div className="card trail-card">
           <div className="panel-head" style={{ padding: 0, border: "none", marginBottom: 12 }}>
             <div>
-              <h3 style={{ margin: 0 }}>Trail {trace ? <>· <span className="mono">{trace.customer_id}</span>, week {trace.week_idx + 1}</> : null}</h3>
+              <h3 style={{ margin: 0 }}>Record trail {trace ? <span className="muted" style={{ fontWeight: 400 }}>· <span className="mono">{trace.customer_id}</span>, week {trace.week_idx + 1}</span> : null}</h3>
               {trace && <div className="small muted">{trace.steps.length} stages · {trace.total_ms.toFixed(0)} ms in total (including the GRU explanation)</div>}
             </div>
             {trace && <button className="btn" onClick={() => nav(`/customer/${trace.customer_id}?w=${trace.week_idx}`)}>Open customer →</button>}
@@ -177,15 +227,6 @@ export default function Live() {
 
       <Queue />
       <Audit />
-    </div>
-  );
-}
-
-function Mini({ label, value, color }: { label: string; value: React.ReactNode; color?: string }) {
-  return (
-    <div className="card mini">
-      <div className="stat-label">{label}</div>
-      <div className="mini-value" style={color ? { color } : undefined}>{value}</div>
     </div>
   );
 }
@@ -308,27 +349,33 @@ function StepData({ s }: { s: Step }) {
 function Queue() {
   const [q, setQ] = useState<{ items: Case[]; pending: number } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [view, setView] = useState<"pending" | "reviewed">("pending");
   const load = useCallback(() => live.queue().then(setQ).catch(() => {}), []);
   useEffect(() => { load(); const t = setInterval(load, 2500); return () => clearInterval(t); }, [load]);
   const act = async (id: string, d: "approve" | "reject") => { setBusy(id); try { await live.decide(id, d); await load(); } finally { setBusy(null); } };
+  const items = (q?.items ?? []).filter((c) => (view === "pending") === (c.status === "pending"));
+  const reviewed = (q?.items.length ?? 0) - (q?.pending ?? 0);
 
   return (
     <section className="section">
       <div className="section-head">
         <div>
           <h2>Approval queue</h2>
-          <p>High and Medium cases wait here. Nobody is contacted until a person approves; approving writes the outreach note with the LLM (or a template if no key is set).</p>
+          <p>High and Medium cases wait for a person. Approving writes the outreach note with the LLM.</p>
         </div>
-        <span className="pill neutral">{q?.pending ?? 0} pending</span>
+        <div className="seg">
+          <button className={view === "pending" ? "on" : ""} onClick={() => setView("pending")}>Pending · {q?.pending ?? 0}</button>
+          <button className={view === "reviewed" ? "on" : ""} onClick={() => setView("reviewed")}>Reviewed · {reviewed}</button>
+        </div>
       </div>
-      {!q || q.items.length === 0 ? <div className="card empty">No cases yet. Start the stream.</div> : (
+      {items.length === 0 ? <div className="card empty">{view === "pending" ? "No pending cases. Start the stream." : "Nothing reviewed yet. Approve or reject a pending case."}</div> : (
         <div className="grid g3">
-          {q.items.slice(0, 9).map((c) => (
+          {(view === "reviewed" ? [...items].sort((a, b) => b.updated.localeCompare(a.updated)) : items).slice(0, 9).map((c) => (
             <div className="card case" key={c.id}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span className="mono">{c.customer_id} · W{c.week_idx + 1}</span><TierPill tier={c.tier} />
               </div>
-              <div className="stat-value" style={{ fontSize: 26, color: tierColor(c.tier) }}>{pct(c.risk)}</div>
+              <div className="stat-value" style={{ fontSize: 28, marginTop: 4 }}>{pct(c.risk)}</div>
               <div className="small muted">{c.action} · {c.reasons.join(", ")}</div>
               {c.status === "pending" ? (
                 <div className="toolbar" style={{ marginTop: 10 }}>
@@ -339,10 +386,11 @@ function Queue() {
                 <div style={{ marginTop: 10 }}>
                   <span className={`pill ${c.status === "approved" ? "Low" : "neutral"}`}>{c.status}</span>
                   {c.message && (
-                    <div className="narrative" style={{ fontSize: 14.5, marginTop: 8 }}>
+                    <div className="narrative" style={{ fontSize: 13.5, marginTop: 12 }}>
                       <p>{c.message.summary}</p>
                       {c.message.customer_message && <p className="quote">{c.message.customer_message}</p>}
-                      <div className="small muted" style={{ fontFamily: "var(--sans)" }}>{c.message.source === "template" ? "Template (no LLM key)" : `Written by ${c.message.source}`}</div>
+                      {c.message.recommended_action && <p className="small"><b style={{ fontWeight: 550 }}>Suggested action:</b> {c.message.recommended_action}</p>}
+                      <div className="small muted">{c.message.source === "template" ? "Template (no LLM key)" : `Written by ${c.message.source}`}</div>
                     </div>
                   )}
                 </div>
@@ -361,10 +409,10 @@ function Audit() {
   return (
     <section className="section">
       <div className="section-head">
-        <div><h2>Audit log</h2><p>Every scored record and every human decision, appended to <span className="mono">logs/audit_log.jsonl</span> on disk.</p></div>
+        <div><h2>Audit log</h2><p>Every score and every human decision, saved to <span className="mono">logs/audit_log.jsonl</span>.</p></div>
         <span className="pill neutral">{a?.total ?? 0} entries</span>
       </div>
-      <div className="card table-wrap" style={{ padding: 6 }}>
+      <div className="card table-wrap">
         <table className="table">
           <thead><tr><th>Time</th><th>Event</th><th>Customer</th><th>Week</th><th>Detail</th></tr></thead>
           <tbody>
